@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-
 <meta charset="UTF-8">
 
 <meta
@@ -294,7 +293,7 @@ body::before{
 
 
 
-/* MESSAGE */
+/* MESSAGES */
 
 .messages{
 
@@ -547,7 +546,6 @@ body::before{
 }
 
 </style>
-
 </head>
 
 <body>
@@ -765,18 +763,9 @@ document.getElementById(
 
 const animals = [
 
-    "🐶",
-    "🐱",
-    "🦊",
-    "🐼",
-    "🐸",
-    "🐵",
-    "🐰",
-    "🦁",
-    "🐯",
-    "🐨",
-    "🐻",
-    "🐹"
+    "🐶","🐱","🦊","🐼",
+    "🐸","🐵","🐰","🦁",
+    "🐯","🐨","🐻","🐹"
 
 ];
 
@@ -871,15 +860,17 @@ localStorage.getItem(
 if(!usedBefore){
 
     db.ref("system/totalUsers")
-    .transaction(
+    .once("value")
 
-        (current)=>{
+    .then((snap)=>{
 
-            return (current || 0) + 1;
+        const total =
+        snap.val() || 0;
 
-        }
+        db.ref("system/totalUsers")
+        .set(total + 1);
 
-    );
+    });
 
     localStorage.setItem(
         "nova_used",
