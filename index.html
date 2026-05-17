@@ -23,25 +23,14 @@ rel="stylesheet"
 <style>
 
 :root{
-
     --bg:#020617;
-
-    --card:
-    rgba(15,23,42,.72);
-
-    --card2:
-    rgba(30,41,59,.75);
-
+    --card:rgba(15,23,42,.72);
+    --card2:rgba(30,41,59,.75);
     --blue:#2563eb;
-
     --blue2:#7c3aed;
-
     --green:#22c55e;
-
     --red:#dc2626;
-
     --text:#ffffff;
-
     --sub:#94a3b8;
 }
 
@@ -54,10 +43,8 @@ rel="stylesheet"
 
 html,
 body{
-
     width:100%;
     height:100%;
-
     overflow:hidden;
 
     background:
@@ -85,21 +72,9 @@ body::before{
     inset:0;
 
     background-image:
-
-    radial-gradient(
-        white 1px,
-        transparent 1px
-    ),
-
-    radial-gradient(
-        #60a5fa 1px,
-        transparent 1px
-    ),
-
-    radial-gradient(
-        #a855f7 1px,
-        transparent 1px
-    );
+    radial-gradient(white 1px, transparent 1px),
+    radial-gradient(#60a5fa 1px, transparent 1px),
+    radial-gradient(#a855f7 1px, transparent 1px);
 
     background-size:
     120px 120px,
@@ -181,14 +156,11 @@ body::before{
 }
 
 .finding-title{
-
     font-size:26px;
-
     font-weight:800;
 }
 
 .finding-sub{
-
     color:var(--sub);
 }
 
@@ -197,7 +169,6 @@ body::before{
 /* APP */
 
 .app{
-
     width:100%;
     height:100dvh;
 
@@ -232,10 +203,8 @@ body::before{
 }
 
 .top-left{
-
     display:flex;
     align-items:center;
-
     gap:12px;
 }
 
@@ -264,22 +233,17 @@ body::before{
 }
 
 .info{
-
     display:flex;
     flex-direction:column;
 }
 
 .title{
-
     font-size:19px;
-
     font-weight:800;
 }
 
 .status{
-
     font-size:12px;
-
     color:#4ade80;
 }
 
@@ -409,9 +373,7 @@ body::before{
 }
 
 .sendbox{
-
     display:flex;
-
     gap:8px;
 }
 
@@ -511,19 +473,14 @@ body::before{
 @media(max-width:700px){
 
     .topbar{
-
         height:64px;
-
         padding:8px 10px;
     }
 
     .logo{
-
         width:42px;
         height:42px;
-
         border-radius:14px;
-
         font-size:18px;
     }
 
@@ -536,32 +493,23 @@ body::before{
     }
 
     .next-btn{
-
         height:42px;
-
         padding:0 14px;
-
         border-radius:14px;
-
         font-size:13px;
     }
 
     .messages{
-
         padding:10px;
-
         gap:8px;
     }
 
     .msg{
-
         max-width:88%;
-
         border-radius:18px;
     }
 
     .text{
-
         font-size:15px;
     }
 
@@ -621,8 +569,6 @@ body::before{
             </div>
 
         </div>
-
-
 
         <button
             id="nextBtn"
@@ -953,7 +899,7 @@ async function findPartner(){
 
 
 
-/* START CHAT */
+/* CHAT */
 
 let loaded = false;
 
@@ -974,6 +920,7 @@ function startChat(){
 
     /* ONLINE */
 
+    const onlineRef =
     db.ref(
 
         "rooms/" +
@@ -981,18 +928,16 @@ function startChat(){
         "/online/" +
         myId
 
-    ).set(true);
+    );
 
-    db.ref(
+    onlineRef.set(true);
 
-        "rooms/" +
-        roomId +
-        "/online/" +
-        myId
-
-    ).onDisconnect().remove();
+    onlineRef.onDisconnect()
+    .remove();
 
 
+
+    /* MESSAGE */
 
     db.ref(
 
@@ -1033,9 +978,7 @@ function startChat(){
                         ?
                         `
                         <div class="text">
-
                             ${safe(data.text)}
-
                         </div>
                         `
                         :
@@ -1047,11 +990,8 @@ function startChat(){
                         ?
                         `
                         <img
-
                             src="${data.image}"
-
                             class="chat-image"
-
                             onclick="
                                 openImageViewer(
                                     '${data.image}'
@@ -1080,7 +1020,7 @@ function startChat(){
 
 
 
-    /* WATCH ONLINE */
+    /* WATCH */
 
     db.ref(
 
@@ -1092,39 +1032,24 @@ function startChat(){
 
         "value",
 
-        async (snap)=>{
+        (snap)=>{
 
             const online =
             snap.val();
 
-            if(!online){
-
-                await db.ref(
-                    "rooms/" + roomId
-                ).remove();
-
-                localStorage.removeItem(
-                    "nova_room"
-                );
-
-                location.reload();
-
-                return;
-            }
-
-            const count =
-            Object.keys(online)
-            .length;
-
-            if(count <= 1){
+            if(
+                online &&
+                Object.keys(online)
+                .length >= 2
+            ){
 
                 statusEl.innerHTML =
-                "● Người kia đã thoát 😢";
+                "● Đã kết nối";
 
             }else{
 
                 statusEl.innerHTML =
-                "● Đã kết nối";
+                "● Người kia đã thoát 😢";
             }
 
         }
@@ -1315,7 +1240,7 @@ function safe(text){
 
 setInterval(async ()=>{
 
-    /* CLEAN WAITING */
+    /* WAITING CLEAN */
 
     const waiting =
     await db.ref(
@@ -1348,7 +1273,7 @@ setInterval(async ()=>{
 
 
 
-    /* CLEAN EMPTY ROOM */
+    /* ONLY CLEAN DEAD ROOM */
 
     const rooms =
     await db.ref(
@@ -1357,17 +1282,37 @@ setInterval(async ()=>{
 
     rooms.forEach((r)=>{
 
-        const d =
-        r.val();
+        const d = r.val();
+
+        if(!d) return;
+
+        if(!d.createdAt)
+        return;
+
+        /* còn người */
 
         if(
 
-            !d.online ||
+            d.online &&
 
             Object.keys(
                 d.online
-            ).length <= 0
+            ).length > 0
 
+        ){
+
+            return;
+        }
+
+        /* room chết */
+
+        const age =
+        Date.now() -
+        d.createdAt;
+
+        if(
+            age >
+            1000 * 60 * 2
         ){
 
             db.ref(
