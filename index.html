@@ -734,49 +734,31 @@ firebase.database();
 
 
 const messages =
-document.getElementById(
-    "messages"
-);
+document.getElementById("messages");
 
 const sendBtn =
-document.getElementById(
-    "sendBtn"
-);
+document.getElementById("sendBtn");
 
 const nextBtn =
-document.getElementById(
-    "nextBtn"
-);
+document.getElementById("nextBtn");
 
 const messageInput =
-document.getElementById(
-    "messageInput"
-);
+document.getElementById("messageInput");
 
 const statusEl =
-document.getElementById(
-    "status"
-);
+document.getElementById("status");
 
 const finding =
-document.getElementById(
-    "finding"
-);
+document.getElementById("finding");
 
 const imageInput =
-document.getElementById(
-    "imageInput"
-);
+document.getElementById("imageInput");
 
 const imageViewer =
-document.getElementById(
-    "imageViewer"
-);
+document.getElementById("imageViewer");
 
 const viewerImage =
-document.getElementById(
-    "viewerImage"
-);
+document.getElementById("viewerImage");
 
 
 
@@ -811,7 +793,7 @@ localStorage.getItem(
 
 
 
-/* RESTORE ROOM */
+/* RESTORE */
 
 async function restoreRoom(){
 
@@ -841,7 +823,7 @@ async function restoreRoom(){
 
 
 
-/* FIND PARTNER */
+/* FIND */
 
 async function findPartner(){
 
@@ -888,7 +870,10 @@ async function findPartner(){
             users:{
                 a:myId,
                 b:found
-            }
+            },
+
+            createdAt:
+            Date.now()
 
         });
 
@@ -902,7 +887,10 @@ async function findPartner(){
 
         await waitingRef
         .child(myId)
-        .set(true);
+        .set({
+
+            time:Date.now()
+        });
 
         waitingRef.on(
 
@@ -965,13 +953,14 @@ async function findPartner(){
 
 
 
-/* CHAT */
+/* START CHAT */
 
 let loaded = false;
 
 function startChat(){
 
-    if(loaded) return;
+    if(loaded)
+    return;
 
     loaded = true;
 
@@ -980,6 +969,28 @@ function startChat(){
 
     statusEl.innerHTML =
     "● Đã kết nối";
+
+
+
+    /* ONLINE */
+
+    db.ref(
+
+        "rooms/" +
+        roomId +
+        "/online/" +
+        myId
+
+    ).set(true);
+
+    db.ref(
+
+        "rooms/" +
+        roomId +
+        "/online/" +
+        myId
+
+    ).onDisconnect().remove();
 
 
 
@@ -1067,6 +1078,59 @@ function startChat(){
 
     );
 
+
+
+    /* WATCH ONLINE */
+
+    db.ref(
+
+        "rooms/" +
+        roomId +
+        "/online"
+
+    ).on(
+
+        "value",
+
+        async (snap)=>{
+
+            const online =
+            snap.val();
+
+            if(!online){
+
+                await db.ref(
+                    "rooms/" + roomId
+                ).remove();
+
+                localStorage.removeItem(
+                    "nova_room"
+                );
+
+                location.reload();
+
+                return;
+            }
+
+            const count =
+            Object.keys(online)
+            .length;
+
+            if(count <= 1){
+
+                statusEl.innerHTML =
+                "● Người kia đã thoát 😢";
+
+            }else{
+
+                statusEl.innerHTML =
+                "● Đã kết nối";
+            }
+
+        }
+
+    );
+
 }
 
 
@@ -1093,7 +1157,9 @@ function sendMessage(){
 
         text:text,
 
-        user:myId
+        user:myId,
+
+        time:Date.now()
 
     });
 
@@ -1164,7 +1230,9 @@ imageInput.addEventListener(
                 image:
                 e.target.result,
 
-                user:myId
+                user:myId,
+
+                time:Date.now()
 
             });
 
@@ -1188,8 +1256,14 @@ async function(){
     if(roomId){
 
         await db.ref(
-            "rooms/" + roomId
+
+            "rooms/" +
+            roomId +
+            "/online/" +
+            myId
+
         ).remove();
+
     }
 
     localStorage.removeItem(
@@ -1234,6 +1308,77 @@ function safe(text){
 
     .replace(/>/g,"&gt;");
 }
+
+
+
+/* CLEAN SYSTEM */
+
+setInterval(async ()=>{
+
+    /* CLEAN WAITING */
+
+    const waiting =
+    await db.ref(
+        "waitingUsers"
+    ).once("value");
+
+    waiting.forEach((s)=>{
+
+        const data =
+        s.val();
+
+        if(
+
+            !data ||
+
+            Date.now() -
+            data.time >
+
+            1000 * 60 * 5
+
+        ){
+
+            db.ref(
+                "waitingUsers/" +
+                s.key
+            ).remove();
+        }
+
+    });
+
+
+
+    /* CLEAN EMPTY ROOM */
+
+    const rooms =
+    await db.ref(
+        "rooms"
+    ).once("value");
+
+    rooms.forEach((r)=>{
+
+        const d =
+        r.val();
+
+        if(
+
+            !d.online ||
+
+            Object.keys(
+                d.online
+            ).length <= 0
+
+        ){
+
+            db.ref(
+                "rooms/" +
+                r.key
+            ).remove();
+        }
+
+    });
+
+},30000);
 
 
 
