@@ -697,6 +697,9 @@ firebase.initializeApp({
     authDomain:
     "quanlyduan-466a8.firebaseapp.com",
 
+    databaseURL:
+    "https://quanlyduan-466a8-default-rtdb.asia-southeast1.firebasedatabase.app",
+
     projectId:
     "quanlyduan-466a8",
 
@@ -718,6 +721,47 @@ const db =
 firebase.database();
 
 
+
+/* DOM */
+
+const messages =
+document.getElementById("messages");
+
+const sendBtn =
+document.getElementById("sendBtn");
+
+const heartBtn =
+document.getElementById("heartBtn");
+
+const nextBtn =
+document.getElementById("nextBtn");
+
+const messageInput =
+document.getElementById("messageInput");
+
+const statusEl =
+document.getElementById("status");
+
+const finding =
+document.getElementById("finding");
+
+const imageInput =
+document.getElementById("imageInput");
+
+const imageViewer =
+document.getElementById("imageViewer");
+
+const viewerImage =
+document.getElementById("viewerImage");
+
+const totalUsersEl =
+document.getElementById(
+    "totalUsers"
+);
+
+
+
+/* AVATAR */
 
 const animals = [
 
@@ -795,42 +839,7 @@ if(!myAvatarColor){
 
 
 
-const messages =
-document.getElementById("messages");
-
-const sendBtn =
-document.getElementById("sendBtn");
-
-const heartBtn =
-document.getElementById("heartBtn");
-
-const nextBtn =
-document.getElementById("nextBtn");
-
-const messageInput =
-document.getElementById("messageInput");
-
-const statusEl =
-document.getElementById("status");
-
-const finding =
-document.getElementById("finding");
-
-const imageInput =
-document.getElementById("imageInput");
-
-const imageViewer =
-document.getElementById("imageViewer");
-
-const viewerImage =
-document.getElementById("viewerImage");
-
-const totalUsersEl =
-document.getElementById(
-    "totalUsers"
-);
-
-
+/* USER */
 
 let myId =
 localStorage.getItem(
@@ -852,10 +861,7 @@ if(!myId){
 
 
 
-/* USERS */
-
-const totalUsersRef =
-db.ref("system/totalUsers");
+/* TOTAL USERS */
 
 const usedBefore =
 localStorage.getItem(
@@ -864,12 +870,15 @@ localStorage.getItem(
 
 if(!usedBefore){
 
-    totalUsersRef.transaction(
+    db.ref("system/totalUsers")
+    .transaction(
+
         (current)=>{
 
             return (current || 0) + 1;
 
         }
+
     );
 
     localStorage.setItem(
@@ -877,6 +886,8 @@ if(!usedBefore){
         "1"
     );
 }
+
+
 
 db.ref("system/totalUsers")
 .on(
@@ -886,14 +897,19 @@ db.ref("system/totalUsers")
     (snap)=>{
 
         totalUsersEl.innerHTML =
+
         "👥 " +
+
         (snap.val() || 0) +
+
         " người đã tham gia";
     }
 
 );
 
 
+
+/* ROOM */
 
 let roomId =
 localStorage.getItem(
@@ -976,7 +992,7 @@ function linkify(text){
             ){
 
                 href =
-                "https://" + href;
+                "https://" + url;
             }
 
             return `
