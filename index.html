@@ -293,7 +293,7 @@ body::before{
 
 
 
-/* MESSAGES */
+/* MESSAGE */
 
 .messages{
 
@@ -681,37 +681,34 @@ body::before{
 
 
 
-<script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
 
 firebase.initializeApp({
 
     apiKey:
-    "AIzaSyBjfGiX1GIhztCOclVrrW1Y-Pt4-Lur5vg",
+    "AIzaSyBkRFn4i_tPSFKUMhC_xVWrL2u43gBPLqM",
 
     authDomain:
-    "quanlyduan-466a8.firebaseapp.com",
+    "vercel-mk.firebaseapp.com",
 
     databaseURL:
-    "https://quanlyduan-466a8-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "https://vercel-mk-default-rtdb.asia-southeast1.firebasedatabase.app",
 
     projectId:
-    "quanlyduan-466a8",
+    "vercel-mk",
 
     storageBucket:
-    "quanlyduan-466a8.firebasestorage.app",
+    "vercel-mk.firebasestorage.app",
 
     messagingSenderId:
-    "137443244362",
+    "1041836554984",
 
     appId:
-    "1:137443244362:web:0cc219d93445d0d24269b3",
-
-    measurementId:
-    "G-X356J5R58M"
+    "1:1041836554984:web:da8011543b29b8f47ae75d"
 
 });
 
@@ -720,52 +717,20 @@ firebase.database();
 
 
 
-/* DOM */
-
-const messages =
-document.getElementById("messages");
-
-const sendBtn =
-document.getElementById("sendBtn");
-
-const heartBtn =
-document.getElementById("heartBtn");
-
-const nextBtn =
-document.getElementById("nextBtn");
-
-const messageInput =
-document.getElementById("messageInput");
-
-const statusEl =
-document.getElementById("status");
-
-const finding =
-document.getElementById("finding");
-
-const imageInput =
-document.getElementById("imageInput");
-
-const imageViewer =
-document.getElementById("imageViewer");
-
-const viewerImage =
-document.getElementById("viewerImage");
-
-const totalUsersEl =
-document.getElementById(
-    "totalUsers"
-);
-
-
-
-/* AVATAR */
-
 const animals = [
 
-    "🐶","🐱","🦊","🐼",
-    "🐸","🐵","🐰","🦁",
-    "🐯","🐨","🐻","🐹"
+    "🐶",
+    "🐱",
+    "🦊",
+    "🐼",
+    "🐸",
+    "🐵",
+    "🐰",
+    "🦁",
+    "🐯",
+    "🐨",
+    "🐻",
+    "🐹"
 
 ];
 
@@ -828,7 +793,42 @@ if(!myAvatarColor){
 
 
 
-/* USER */
+const messages =
+document.getElementById("messages");
+
+const sendBtn =
+document.getElementById("sendBtn");
+
+const heartBtn =
+document.getElementById("heartBtn");
+
+const nextBtn =
+document.getElementById("nextBtn");
+
+const messageInput =
+document.getElementById("messageInput");
+
+const statusEl =
+document.getElementById("status");
+
+const finding =
+document.getElementById("finding");
+
+const imageInput =
+document.getElementById("imageInput");
+
+const imageViewer =
+document.getElementById("imageViewer");
+
+const viewerImage =
+document.getElementById("viewerImage");
+
+const totalUsersEl =
+document.getElementById(
+    "totalUsers"
+);
+
+
 
 let myId =
 localStorage.getItem(
@@ -850,7 +850,10 @@ if(!myId){
 
 
 
-/* TOTAL USERS */
+/* USERS */
+
+const totalUsersRef =
+db.ref("system/totalUsers");
 
 const usedBefore =
 localStorage.getItem(
@@ -859,26 +862,19 @@ localStorage.getItem(
 
 if(!usedBefore){
 
-    db.ref("system/totalUsers")
-    .once("value")
+    totalUsersRef.transaction(
+        (current)=>{
 
-    .then((snap)=>{
+            return (current || 0) + 1;
 
-        const total =
-        snap.val() || 0;
-
-        db.ref("system/totalUsers")
-        .set(total + 1);
-
-    });
+        }
+    );
 
     localStorage.setItem(
         "nova_used",
         "1"
     );
 }
-
-
 
 db.ref("system/totalUsers")
 .on(
@@ -888,19 +884,14 @@ db.ref("system/totalUsers")
     (snap)=>{
 
         totalUsersEl.innerHTML =
-
         "👥 " +
-
         (snap.val() || 0) +
-
         " người đã tham gia";
     }
 
 );
 
 
-
-/* ROOM */
 
 let roomId =
 localStorage.getItem(
@@ -983,7 +974,7 @@ function linkify(text){
             ){
 
                 href =
-                "https://" + url;
+                "https://" + href;
             }
 
             return `
