@@ -386,6 +386,21 @@ body::before{
 
 
 
+/* SYSTEM */
+
+.system{
+
+    text-align:center;
+
+    opacity:.7;
+
+    font-size:14px;
+
+    padding:8px;
+}
+
+
+
 /* BOTTOM */
 
 .bottom{
@@ -706,25 +721,25 @@ body::before{
 firebase.initializeApp({
 
     apiKey:
-    "AIzaSyBkRFn4i_tPSFKUMhC_xVWrL2u43gBPLqM",
+    "YOUR_API_KEY",
 
     authDomain:
-    "vercel-mk.firebaseapp.com",
+    "YOUR_PROJECT.firebaseapp.com",
 
     databaseURL:
-    "https://vercel-mk-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "https://YOUR_PROJECT-default-rtdb.asia-southeast1.firebasedatabase.app",
 
     projectId:
-    "vercel-mk",
+    "YOUR_PROJECT",
 
     storageBucket:
-    "vercel-mk.firebasestorage.app",
+    "YOUR_PROJECT.appspot.com",
 
     messagingSenderId:
-    "1041836554984",
+    "XXXX",
 
     appId:
-    "1:1041836554984:web:da8011543b29b8f47ae75d"
+    "XXXX"
 
 });
 
@@ -734,49 +749,31 @@ firebase.database();
 
 
 const messages =
-document.getElementById(
-    "messages"
-);
+document.getElementById("messages");
 
 const sendBtn =
-document.getElementById(
-    "sendBtn"
-);
+document.getElementById("sendBtn");
 
 const nextBtn =
-document.getElementById(
-    "nextBtn"
-);
+document.getElementById("nextBtn");
 
 const messageInput =
-document.getElementById(
-    "messageInput"
-);
+document.getElementById("messageInput");
 
 const statusEl =
-document.getElementById(
-    "status"
-);
+document.getElementById("status");
 
 const finding =
-document.getElementById(
-    "finding"
-);
+document.getElementById("finding");
 
 const imageInput =
-document.getElementById(
-    "imageInput"
-);
+document.getElementById("imageInput");
 
 const imageViewer =
-document.getElementById(
-    "imageViewer"
-);
+document.getElementById("imageViewer");
 
 const viewerImage =
-document.getElementById(
-    "viewerImage"
-);
+document.getElementById("viewerImage");
 
 
 
@@ -790,6 +787,8 @@ Math.random()
 
 let roomId = null;
 
+let partnerLeft = false;
+
 
 
 /* MATCH */
@@ -799,21 +798,13 @@ async function findPartner(){
     finding.style.display =
     "flex";
 
-
-
     const waitingRef =
     db.ref("waitingUsers");
-
-
 
     const snap =
     await waitingRef.once("value");
 
-
-
     let found = null;
-
-
 
     snap.forEach((s)=>{
 
@@ -832,8 +823,6 @@ async function findPartner(){
         "room_" +
         Date.now();
 
-
-
         await db.ref(
             "rooms/" + roomId
         ).set({
@@ -844,13 +833,9 @@ async function findPartner(){
             }
         });
 
-
-
         await waitingRef
         .child(found)
         .remove();
-
-
 
         startChat();
 
@@ -859,8 +844,6 @@ async function findPartner(){
         await waitingRef
         .child(myId)
         .set(true);
-
-
 
         waitingRef.on(
 
@@ -876,8 +859,6 @@ async function findPartner(){
                     await db.ref(
                         "rooms"
                     ).once("value");
-
-
 
                     rooms.forEach((r)=>{
 
@@ -900,8 +881,6 @@ async function findPartner(){
                         }
 
                     });
-
-
 
                     if(roomId){
 
@@ -943,26 +922,17 @@ function startChat(){
             const data =
             snapshot.val();
 
-
-
             const row =
-            document.createElement(
-                "div"
-            );
-
-
+            document.createElement("div");
 
             row.className =
+            "row " +
 
-                "row " +
-
-                (
-                    data.user === myId
-                    ? "me"
-                    : ""
-                );
-
-
+            (
+                data.user === myId
+                ? "me"
+                : ""
+            );
 
             row.innerHTML = `
 
@@ -973,16 +943,12 @@ function startChat(){
                         ?
                         `
                         <div class="text">
-
                             ${safe(data.text)}
-
                         </div>
                         `
                         :
                         ""
                     }
-
-
 
                     ${
                         data.image
@@ -1009,16 +975,56 @@ function startChat(){
 
             `;
 
-
-
-            messages.appendChild(
-                row
-            );
-
-
+            messages.appendChild(row);
 
             messages.scrollTop =
             messages.scrollHeight;
+        }
+
+    );
+
+
+
+    /* PARTNER LEAVE */
+
+    db.ref(
+        "rooms/" + roomId + "/leave"
+    ).on(
+
+        "value",
+
+        (snap)=>{
+
+            if(
+                snap.exists()
+                &&
+                !partnerLeft
+            ){
+
+                partnerLeft = true;
+
+                statusEl.innerHTML =
+                "● Người kia đã thoát";
+
+                const row =
+                document.createElement(
+                    "div"
+                );
+
+                row.className =
+                "system";
+
+                row.innerHTML =
+                "Người kia đã thoát 😭";
+
+                messages.appendChild(
+                    row
+                );
+
+                messages.scrollTop =
+                messages.scrollHeight;
+            }
+
         }
 
     );
@@ -1037,8 +1043,6 @@ function sendMessage(){
     if(!text || !roomId)
     return;
 
-
-
     db.ref(
         "rooms/" +
         roomId +
@@ -1049,8 +1053,6 @@ function sendMessage(){
 
         user:myId
     });
-
-
 
     messageInput.value = "";
 }
@@ -1092,8 +1094,6 @@ imageInput.addEventListener(
 
         if(!file) return;
 
-
-
         if(
             file.size >
             1024 * 300
@@ -1104,12 +1104,8 @@ imageInput.addEventListener(
             return;
         }
 
-
-
         const reader =
         new FileReader();
-
-
 
         reader.onload =
 
@@ -1130,8 +1126,6 @@ imageInput.addEventListener(
 
         };
 
-
-
         reader.readAsDataURL(
             file
         );
@@ -1146,10 +1140,47 @@ imageInput.addEventListener(
 
 nextBtn.onclick =
 
-function(){
+async function(){
+
+    if(roomId){
+
+        await db.ref(
+
+            "rooms/" +
+            roomId +
+            "/leave"
+
+        ).set(true);
+
+    }
 
     location.reload();
 };
+
+
+
+/* TAB CLOSE */
+
+window.addEventListener(
+
+    "beforeunload",
+
+    ()=>{
+
+        if(roomId){
+
+            db.ref(
+
+                "rooms/" +
+                roomId +
+                "/leave"
+
+            ).set(true);
+        }
+
+    }
+
+);
 
 
 
@@ -1165,8 +1196,6 @@ function(src){
     imageViewer.style.display =
     "flex";
 };
-
-
 
 imageViewer.onclick =
 
