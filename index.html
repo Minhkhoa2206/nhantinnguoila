@@ -245,6 +245,7 @@ body::before{
 .status{
     font-size:12px;
     color:#4ade80;
+    margin-top:2px;
 }
 
 .next-btn{
@@ -566,6 +567,14 @@ body::before{
                     ● Đang kết nối...
                 </div>
 
+                <div
+                    class="status"
+                    id="totalUsers"
+                    style="color:#60a5fa"
+                >
+                    👥 0 người đã tham gia
+                </div>
+
             </div>
 
         </div>
@@ -706,6 +715,11 @@ document.getElementById("imageViewer");
 const viewerImage =
 document.getElementById("viewerImage");
 
+const totalUsersEl =
+document.getElementById(
+    "totalUsers"
+);
+
 
 
 /* USER */
@@ -727,6 +741,56 @@ if(!myId){
         myId
     );
 }
+
+
+
+/* TOTAL USERS */
+
+const totalUsersRef =
+db.ref("system/totalUsers");
+
+const usedBefore =
+localStorage.getItem(
+    "nova_used"
+);
+
+if(!usedBefore){
+
+    totalUsersRef.transaction(
+        (current)=>{
+
+            return (current || 0) + 1;
+
+        }
+    );
+
+    localStorage.setItem(
+        "nova_used",
+        "1"
+    );
+}
+
+
+
+/* LOAD TOTAL USERS */
+
+db.ref("system/totalUsers")
+.on(
+
+    "value",
+
+    (snap)=>{
+
+        const total =
+        snap.val() || 0;
+
+        totalUsersEl.innerHTML =
+        "👥 " +
+        total +
+        " người đã tham gia";
+    }
+
+);
 
 
 
@@ -795,8 +859,6 @@ async function findPartner(){
         }
 
     });
-
-
 
     if(found){
 
@@ -1240,8 +1302,6 @@ function safe(text){
 
 setInterval(async ()=>{
 
-    /* WAITING CLEAN */
-
     const waiting =
     await db.ref(
         "waitingUsers"
@@ -1271,10 +1331,6 @@ setInterval(async ()=>{
 
     });
 
-
-
-    /* ONLY CLEAN DEAD ROOM */
-
     const rooms =
     await db.ref(
         "rooms"
@@ -1289,8 +1345,6 @@ setInterval(async ()=>{
         if(!d.createdAt)
         return;
 
-        /* còn người */
-
         if(
 
             d.online &&
@@ -1303,8 +1357,6 @@ setInterval(async ()=>{
 
             return;
         }
-
-        /* room chết */
 
         const age =
         Date.now() -
