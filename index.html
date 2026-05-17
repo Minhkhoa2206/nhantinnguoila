@@ -780,44 +780,88 @@ document.getElementById(
 
 
 
-const myId =
+/* USER */
 
-Math.random()
-.toString(36)
-.slice(2);
+let myId =
+localStorage.getItem(
+    "nova_myid"
+);
+
+if(!myId){
+
+    myId =
+    Math.random()
+    .toString(36)
+    .slice(2);
+
+    localStorage.setItem(
+        "nova_myid",
+        myId
+    );
+}
 
 
 
-let roomId = null;
+/* ROOM */
+
+let roomId =
+localStorage.getItem(
+    "nova_room"
+);
 
 
 
-/* MATCH */
+/* RESTORE ROOM */
+
+async function restoreRoom(){
+
+    if(!roomId)
+    return false;
+
+    const snap =
+    await db.ref(
+        "rooms/" + roomId
+    ).once("value");
+
+    if(snap.exists()){
+
+        startChat();
+
+        return true;
+    }
+
+    localStorage.removeItem(
+        "nova_room"
+    );
+
+    roomId = null;
+
+    return false;
+}
+
+
+
+/* FIND PARTNER */
 
 async function findPartner(){
 
     finding.style.display =
     "flex";
 
-
-
     const waitingRef =
     db.ref("waitingUsers");
-
-
 
     const snap =
     await waitingRef.once("value");
 
-
-
     let found = null;
-
-
 
     snap.forEach((s)=>{
 
-        if(s.key !== myId && !found){
+        if(
+            s.key !== myId &&
+            !found
+        ){
 
             found = s.key;
         }
@@ -832,7 +876,10 @@ async function findPartner(){
         "room_" +
         Date.now();
 
-
+        localStorage.setItem(
+            "nova_room",
+            roomId
+        );
 
         await db.ref(
             "rooms/" + roomId
@@ -842,15 +889,12 @@ async function findPartner(){
                 a:myId,
                 b:found
             }
+
         });
-
-
 
         await waitingRef
         .child(found)
         .remove();
-
-
 
         startChat();
 
@@ -859,8 +903,6 @@ async function findPartner(){
         await waitingRef
         .child(myId)
         .set(true);
-
-
 
         waitingRef.on(
 
@@ -877,8 +919,6 @@ async function findPartner(){
                         "rooms"
                     ).once("value");
 
-
-
                     rooms.forEach((r)=>{
 
                         const d =
@@ -893,15 +933,20 @@ async function findPartner(){
 
                                 d.users.b === myId
                             )
+
                         ){
 
                             roomId =
                             r.key;
+
+                            localStorage.setItem(
+                                "nova_room",
+                                roomId
+                            );
+
                         }
 
                     });
-
-
 
                     if(roomId){
 
@@ -920,9 +965,15 @@ async function findPartner(){
 
 
 
-/* START CHAT */
+/* CHAT */
+
+let loaded = false;
 
 function startChat(){
+
+    if(loaded) return;
+
+    loaded = true;
 
     finding.style.display =
     "none";
@@ -933,7 +984,11 @@ function startChat(){
 
 
     db.ref(
-        "rooms/" + roomId + "/messages"
+
+        "rooms/" +
+        roomId +
+        "/messages"
+
     ).on(
 
         "child_added",
@@ -943,14 +998,10 @@ function startChat(){
             const data =
             snapshot.val();
 
-
-
             const row =
             document.createElement(
                 "div"
             );
-
-
 
             row.className =
 
@@ -961,8 +1012,6 @@ function startChat(){
                     ? "me"
                     : ""
                 );
-
-
 
             row.innerHTML = `
 
@@ -981,8 +1030,6 @@ function startChat(){
                         :
                         ""
                     }
-
-
 
                     ${
                         data.image
@@ -1009,16 +1056,13 @@ function startChat(){
 
             `;
 
-
-
             messages.appendChild(
                 row
             );
 
-
-
             messages.scrollTop =
             messages.scrollHeight;
+
         }
 
     );
@@ -1034,28 +1078,27 @@ function sendMessage(){
     const text =
     messageInput.value.trim();
 
-    if(!text || !roomId)
-    return;
-
-
+    if(
+        !text ||
+        !roomId
+    ) return;
 
     db.ref(
+
         "rooms/" +
         roomId +
         "/messages"
+
     ).push({
 
         text:text,
 
         user:myId
+
     });
-
-
 
     messageInput.value = "";
 }
-
-
 
 sendBtn.onclick =
 sendMessage;
@@ -1090,9 +1133,8 @@ imageInput.addEventListener(
         const file =
         imageInput.files[0];
 
-        if(!file) return;
-
-
+        if(!file)
+        return;
 
         if(
             file.size >
@@ -1104,12 +1146,8 @@ imageInput.addEventListener(
             return;
         }
 
-
-
         const reader =
         new FileReader();
-
-
 
         reader.onload =
 
@@ -1123,14 +1161,14 @@ imageInput.addEventListener(
 
             ).push({
 
-                image:e.target.result,
+                image:
+                e.target.result,
 
                 user:myId
+
             });
 
         };
-
-
 
         reader.readAsDataURL(
             file
@@ -1145,8 +1183,18 @@ imageInput.addEventListener(
 /* NEXT */
 
 nextBtn.onclick =
+async function(){
 
-function(){
+    if(roomId){
+
+        await db.ref(
+            "rooms/" + roomId
+        ).remove();
+    }
+
+    localStorage.removeItem(
+        "nova_room"
+    );
 
     location.reload();
 };
@@ -1165,8 +1213,6 @@ function(src){
     imageViewer.style.display =
     "flex";
 };
-
-
 
 imageViewer.onclick =
 
@@ -1193,7 +1239,14 @@ function safe(text){
 
 /* RUN */
 
-findPartner();
+restoreRoom().then((ok)=>{
+
+    if(!ok){
+
+        findPartner();
+    }
+
+});
 
 </script>
 
