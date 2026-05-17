@@ -164,6 +164,28 @@ body::before{
     color:var(--sub);
 }
 
+.online-count{
+
+    font-size:15px;
+
+    color:#60a5fa;
+
+    font-weight:700;
+
+    padding:10px 16px;
+
+    border-radius:16px;
+
+    background:
+    rgba(255,255,255,.04);
+
+    border:
+    1px solid rgba(255,255,255,.05);
+
+    backdrop-filter:
+    blur(12px);
+}
+
 
 
 /* APP */
@@ -537,6 +559,13 @@ body::before{
         Matching realtime 😏
     </div>
 
+    <div
+        class="online-count"
+        id="onlineCount"
+    >
+        👀 Đang online: 0
+    </div>
+
 </div>
 
 
@@ -679,32 +708,10 @@ firebase.database();
 
 
 
-const messages =
-document.getElementById("messages");
-
-const sendBtn =
-document.getElementById("sendBtn");
-
-const nextBtn =
-document.getElementById("nextBtn");
-
-const messageInput =
-document.getElementById("messageInput");
-
-const statusEl =
-document.getElementById("status");
-
-const finding =
-document.getElementById("finding");
-
-const imageInput =
-document.getElementById("imageInput");
-
-const imageViewer =
-document.getElementById("imageViewer");
-
-const viewerImage =
-document.getElementById("viewerImage");
+const onlineCount =
+document.getElementById(
+    "onlineCount"
+);
 
 
 
@@ -730,613 +737,66 @@ if(!myId){
 
 
 
-/* ROOM */
+/* GLOBAL ONLINE */
 
-let roomId =
-localStorage.getItem(
-    "nova_room"
+const globalOnlineRef =
+db.ref(
+    "onlineUsers/" + myId
 );
 
+globalOnlineRef.set({
 
-
-/* RESTORE */
-
-async function restoreRoom(){
-
-    if(!roomId)
-    return false;
-
-    const snap =
-    await db.ref(
-        "rooms/" + roomId
-    ).once("value");
-
-    if(snap.exists()){
-
-        startChat();
-
-        return true;
-    }
-
-    localStorage.removeItem(
-        "nova_room"
-    );
-
-    roomId = null;
-
-    return false;
-}
-
-
-
-/* FIND */
-
-async function findPartner(){
-
-    finding.style.display =
-    "flex";
-
-    const waitingRef =
-    db.ref("waitingUsers");
-
-    const snap =
-    await waitingRef.once("value");
-
-    let found = null;
-
-    snap.forEach((s)=>{
-
-        if(
-            s.key !== myId &&
-            !found
-        ){
-
-            found = s.key;
-        }
-
-    });
-
-
-
-    if(found){
-
-        roomId =
-        "room_" +
-        Date.now();
-
-        localStorage.setItem(
-            "nova_room",
-            roomId
-        );
-
-        await db.ref(
-            "rooms/" + roomId
-        ).set({
-
-            users:{
-                a:myId,
-                b:found
-            },
-
-            createdAt:
-            Date.now()
-
-        });
-
-        await waitingRef
-        .child(found)
-        .remove();
-
-        startChat();
-
-    }else{
-
-        await waitingRef
-        .child(myId)
-        .set({
-
-            time:Date.now()
-        });
-
-        waitingRef.on(
-
-            "child_removed",
-
-            async (s)=>{
-
-                if(
-                    s.key === myId
-                ){
-
-                    const rooms =
-                    await db.ref(
-                        "rooms"
-                    ).once("value");
-
-                    rooms.forEach((r)=>{
-
-                        const d =
-                        r.val();
-
-                        if(
-
-                            d.users &&
-
-                            (
-                                d.users.a === myId ||
-
-                                d.users.b === myId
-                            )
-
-                        ){
-
-                            roomId =
-                            r.key;
-
-                            localStorage.setItem(
-                                "nova_room",
-                                roomId
-                            );
-
-                        }
-
-                    });
-
-                    if(roomId){
-
-                        startChat();
-                    }
-
-                }
-
-            }
-
-        );
-
-    }
-
-}
-
-
-
-/* CHAT */
-
-let loaded = false;
-
-function startChat(){
-
-    if(loaded)
-    return;
-
-    loaded = true;
-
-    finding.style.display =
-    "none";
-
-    statusEl.innerHTML =
-    "● Đã kết nối";
-
-
-
-    /* ONLINE */
-
-    const onlineRef =
-    db.ref(
-
-        "rooms/" +
-        roomId +
-        "/online/" +
-        myId
-
-    );
-
-    onlineRef.set(true);
-
-    onlineRef.onDisconnect()
-    .remove();
-
-
-
-    /* MESSAGE */
-
-    db.ref(
-
-        "rooms/" +
-        roomId +
-        "/messages"
-
-    ).on(
-
-        "child_added",
-
-        (snapshot)=>{
-
-            const data =
-            snapshot.val();
-
-            const row =
-            document.createElement(
-                "div"
-            );
-
-            row.className =
-
-                "row " +
-
-                (
-                    data.user === myId
-                    ? "me"
-                    : ""
-                );
-
-            row.innerHTML = `
-
-                <div class="msg">
-
-                    ${
-                        data.text
-                        ?
-                        `
-                        <div class="text">
-                            ${safe(data.text)}
-                        </div>
-                        `
-                        :
-                        ""
-                    }
-
-                    ${
-                        data.image
-                        ?
-                        `
-                        <img
-                            src="${data.image}"
-                            class="chat-image"
-                            onclick="
-                                openImageViewer(
-                                    '${data.image}'
-                                )
-                            "
-                        >
-                        `
-                        :
-                        ""
-                    }
-
-                </div>
-
-            `;
-
-            messages.appendChild(
-                row
-            );
-
-            messages.scrollTop =
-            messages.scrollHeight;
-
-        }
-
-    );
-
-
-
-    /* WATCH */
-
-    db.ref(
-
-        "rooms/" +
-        roomId +
-        "/online"
-
-    ).on(
-
-        "value",
-
-        (snap)=>{
-
-            const online =
-            snap.val();
-
-            if(
-                online &&
-                Object.keys(online)
-                .length >= 2
-            ){
-
-                statusEl.innerHTML =
-                "● Đã kết nối";
-
-            }else{
-
-                statusEl.innerHTML =
-                "● Người kia đã thoát 😢";
-            }
-
-        }
-
-    );
-
-}
-
-
-
-/* SEND */
-
-function sendMessage(){
-
-    const text =
-    messageInput.value.trim();
-
-    if(
-        !text ||
-        !roomId
-    ) return;
-
-    db.ref(
-
-        "rooms/" +
-        roomId +
-        "/messages"
-
-    ).push({
-
-        text:text,
-
-        user:myId,
-
-        time:Date.now()
-
-    });
-
-    messageInput.value = "";
-}
-
-sendBtn.onclick =
-sendMessage;
-
-
-
-messageInput.addEventListener(
-
-    "keydown",
-
-    (e)=>{
-
-        if(e.key === "Enter"){
-
-            sendMessage();
-        }
-
-    }
-
-);
-
-
-
-/* IMAGE */
-
-imageInput.addEventListener(
-
-    "change",
-
-    ()=>{
-
-        const file =
-        imageInput.files[0];
-
-        if(!file)
-        return;
-
-        if(
-            file.size >
-            1024 * 300
-        ){
-
-            alert("Ảnh quá lớn 😭");
-
-            return;
-        }
-
-        const reader =
-        new FileReader();
-
-        reader.onload =
-
-        function(e){
-
-            db.ref(
-
-                "rooms/" +
-                roomId +
-                "/messages"
-
-            ).push({
-
-                image:
-                e.target.result,
-
-                user:myId,
-
-                time:Date.now()
-
-            });
-
-        };
-
-        reader.readAsDataURL(
-            file
-        );
-
-    }
-
-);
-
-
-
-/* NEXT */
-
-nextBtn.onclick =
-async function(){
-
-    if(roomId){
-
-        await db.ref(
-
-            "rooms/" +
-            roomId +
-            "/online/" +
-            myId
-
-        ).remove();
-
-    }
-
-    localStorage.removeItem(
-        "nova_room"
-    );
-
-    location.reload();
-};
-
-
-
-/* IMAGE VIEW */
-
-window.openImageViewer =
-
-function(src){
-
-    viewerImage.src =
-    src;
-
-    imageViewer.style.display =
-    "flex";
-};
-
-imageViewer.onclick =
-
-function(){
-
-    imageViewer.style.display =
-    "none";
-};
-
-
-
-/* SAFE */
-
-function safe(text){
-
-    return String(text)
-
-    .replace(/</g,"&lt;")
-
-    .replace(/>/g,"&gt;");
-}
-
-
-
-/* CLEAN SYSTEM */
-
-setInterval(async ()=>{
-
-    /* WAITING CLEAN */
-
-    const waiting =
-    await db.ref(
-        "waitingUsers"
-    ).once("value");
-
-    waiting.forEach((s)=>{
-
-        const data =
-        s.val();
-
-        if(
-
-            !data ||
-
-            Date.now() -
-            data.time >
-
-            1000 * 60 * 5
-
-        ){
-
-            db.ref(
-                "waitingUsers/" +
-                s.key
-            ).remove();
-        }
-
-    });
-
-
-
-    /* ONLY CLEAN DEAD ROOM */
-
-    const rooms =
-    await db.ref(
-        "rooms"
-    ).once("value");
-
-    rooms.forEach((r)=>{
-
-        const d = r.val();
-
-        if(!d) return;
-
-        if(!d.createdAt)
-        return;
-
-        /* còn người */
-
-        if(
-
-            d.online &&
-
-            Object.keys(
-                d.online
-            ).length > 0
-
-        ){
-
-            return;
-        }
-
-        /* room chết */
-
-        const age =
-        Date.now() -
-        d.createdAt;
-
-        if(
-            age >
-            1000 * 60 * 2
-        ){
-
-            db.ref(
-                "rooms/" +
-                r.key
-            ).remove();
-        }
-
-    });
-
-},30000);
-
-
-
-/* RUN */
-
-restoreRoom().then((ok)=>{
-
-    if(!ok){
-
-        findPartner();
-    }
+    online:true,
+    time:Date.now()
 
 });
+
+globalOnlineRef
+.onDisconnect()
+.remove();
+
+
+
+/* ONLINE COUNT */
+
+db.ref("onlineUsers").on(
+
+    "value",
+
+    (snap)=>{
+
+        const data =
+        snap.val();
+
+        let realCount = 0;
+
+        if(data){
+
+            realCount =
+            Object.keys(data)
+            .length;
+        }
+
+        /* FAKE ONLINE */
+
+        let displayCount =
+        realCount;
+
+        if(displayCount < 5){
+
+            displayCount =
+            Math.floor(
+                Math.random() * 4
+            ) + 5;
+        }
+
+        onlineCount.innerHTML =
+        "👀 Đang online: " +
+        displayCount;
+
+    }
+
+);
 
 </script>
 
