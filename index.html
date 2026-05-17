@@ -1319,24 +1319,18 @@ function startChat(){
     /* ONLINE */
 
     db.ref(
-
         "rooms/" +
         roomId +
         "/online"
-
     ).on(
-
         "value",
+        async (snap)=>{
 
-        (snap)=>{
-
-            const online =
-            snap.val();
+            const online = snap.val();
 
             if(
                 online &&
-                Object.keys(online)
-                .length >= 2
+                Object.keys(online).length >= 2
             ){
 
                 statusEl.innerHTML =
@@ -1346,10 +1340,39 @@ function startChat(){
 
                 statusEl.innerHTML =
                 "● Người kia đã thoát 😢";
+
+                setTimeout(async ()=>{
+
+                    const check =
+                    await db.ref(
+                        "rooms/" +
+                        roomId +
+                        "/online"
+                    ).once("value");
+
+                    const users =
+                    check.val();
+
+                    if(
+                        !users ||
+                        Object.keys(users).length === 0
+                    ){
+
+                        await db.ref(
+                            "rooms/" + roomId
+                        ).remove();
+
+                        console.log(
+                            "🗑 Đã xóa room:",
+                            roomId
+                        );
+                    }
+
+                },5000);
+
             }
 
         }
-
     );
 
 }
@@ -1559,7 +1582,7 @@ function(){
 
 
 
-/* CLEAN */
+/* AUTO CLEAN */
 
 setInterval(async ()=>{
 
@@ -1593,6 +1616,42 @@ setInterval(async ()=>{
     });
 
 },30000);
+
+
+
+/* CLEAN DEAD ROOM */
+
+setInterval(async ()=>{
+
+    const rooms =
+    await db.ref("rooms")
+    .once("value");
+
+    rooms.forEach((room)=>{
+
+        const data =
+        room.val();
+
+        if(
+            !data.online ||
+            Object.keys(data.online)
+            .length === 0
+        ){
+
+            db.ref(
+                "rooms/" +
+                room.key
+            ).remove();
+
+            console.log(
+                "🗑 Auto clean:",
+                room.key
+            );
+        }
+
+    });
+
+},60000);
 
 
 
