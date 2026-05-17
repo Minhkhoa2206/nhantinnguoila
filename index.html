@@ -1,274 +1,3 @@
-
-
-
-
-
-Văn bản đã dán (1).txt
-Tài liệu
-thêm ID phòng và phòng đó sẽ lưu dưới dạng ID
-
-Okk, đoạn hiện tại của ông đang random match 😅
-Giờ muốn có ID phòng riêng kiểu:
-
-Người tạo phòng → có mã phòng
-
-Người khác nhập đúng ID → vào đúng phòng đó
-
-Tin nhắn lưu theo rooms/{ID_PHONG}
-
-Có thể share ID cho bạn bè
-
-Thì sửa logic findPartner() thành dạng tạo/join room 😎
-
-Thêm đoạn HTML này dưới topbar nhen:
-
-<div style="
-padding:12px;
-display:flex;
-gap:8px;
-background:rgba(15,23,42,.4);
-">
-
-    <input
-        id="roomInput"
-        placeholder="Nhập ID phòng..."
-        style="
-        flex:1;
-        height:46px;
-        border:none;
-        outline:none;
-        border-radius:14px;
-        padding:0 14px;
-        background:rgba(255,255,255,.06);
-        color:white;
-        "
-    >
-
-    <button
-        id="createRoomBtn"
-        style="
-        height:46px;
-        padding:0 18px;
-        border:none;
-        border-radius:14px;
-        background:linear-gradient(135deg,#2563eb,#7c3aed);
-        color:white;
-        font-weight:700;
-        cursor:pointer;
-        "
-    >
-        Tạo
-    </button>
-
-    <button
-        id="joinRoomBtn"
-        style="
-        height:46px;
-        padding:0 18px;
-        border:none;
-        border-radius:14px;
-        background:linear-gradient(135deg,#16a34a,#22c55e);
-        color:white;
-        font-weight:700;
-        cursor:pointer;
-        "
-    >
-        Join
-    </button>
-
-</div>
-
-Rồi XOÁ nguyên cái:
-
-findPartner();
-và XOÁ luôn function:
-
-async function findPartner()
-Thay bằng full này 👇
-
-const roomInput =
-document.getElementById(
-    "roomInput"
-);
-
-const createRoomBtn =
-document.getElementById(
-    "createRoomBtn"
-);
-
-const joinRoomBtn =
-document.getElementById(
-    "joinRoomBtn"
-);
-
-
-
-/* CREATE ROOM */
-
-createRoomBtn.onclick =
-async function(){
-
-    const customId =
-
-    roomInput.value.trim();
-
-    if(!customId){
-
-        alert("Nhập ID phòng 😭");
-
-        return;
-    }
-
-    roomId = customId;
-
-
-
-    const roomRef =
-
-    db.ref("rooms/" + roomId);
-
-
-
-    const snap =
-
-    await roomRef.once("value");
-
-
-
-    if(snap.exists()){
-
-        alert("ID phòng đã tồn tại 😢");
-
-        return;
-    }
-
-
-
-    await roomRef.set({
-
-        createdAt:Date.now(),
-
-        users:{
-            a:myId
-        }
-
-    });
-
-
-
-    finding.style.display =
-    "none";
-
-
-
-    statusEl.innerHTML =
-    "● Đang chờ người vào phòng";
-
-
-
-    startChat();
-
-
-
-    alert(
-        "Đã tạo phòng: " +
-        roomId
-    );
-};
-
-
-
-/* JOIN ROOM */
-
-joinRoomBtn.onclick =
-async function(){
-
-    const customId =
-
-    roomInput.value.trim();
-
-    if(!customId){
-
-        alert("Nhập ID phòng 😭");
-
-        return;
-    }
-
-
-
-    const roomRef =
-
-    db.ref("rooms/" + customId);
-
-
-
-    const snap =
-
-    await roomRef.once("value");
-
-
-
-    if(!snap.exists()){
-
-        alert("Không tồn tại phòng 😢");
-
-        return;
-    }
-
-
-
-    roomId = customId;
-
-
-
-    await roomRef.child(
-        "users/b"
-    ).set(myId);
-
-
-
-    finding.style.display =
-    "none";
-
-
-
-    statusEl.innerHTML =
-    "● Đã kết nối";
-
-
-
-    startChat();
-};
-Rồi thêm đoạn này trong startChat() để hiện ID phòng 😏
-
-Tìm:
-
-statusEl.innerHTML =
-"● Đã kết nối";
-đổi thành:
-
-statusEl.innerHTML =
-
-"● Phòng: " + roomId;
-Giờ database Firebase sẽ lưu kiểu:
-
-rooms
- └── phongabc
-      ├── users
-      └── messages
-rất sạch 😌
-
-Ví dụ:
-
-rooms/demo123/messages
-là toàn bộ chat phòng demo123.
-
-File gốc user gửi: 
-
-
-
-full code nhé, ID phong tự động chứ nhập gì
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -284,7 +13,7 @@ viewport-fit=cover
 "
 />
 
-<title>Nova Stranger Room</title>
+<title>Nova Stranger</title>
 
 <link
 href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
@@ -299,6 +28,9 @@ rel="stylesheet"
 
     --card:
     rgba(15,23,42,.72);
+
+    --card2:
+    rgba(30,41,59,.75);
 
     --blue:#2563eb;
 
@@ -392,6 +124,72 @@ body::before{
         transform:translateY(-120px);
     }
 
+}
+
+
+
+/* FINDING */
+
+.finding{
+
+    position:fixed;
+    inset:0;
+
+    background:
+    rgba(2,6,23,.94);
+
+    backdrop-filter:blur(10px);
+
+    z-index:999999;
+
+    display:flex;
+    flex-direction:column;
+
+    align-items:center;
+    justify-content:center;
+
+    gap:18px;
+}
+
+.loader{
+
+    width:90px;
+    height:90px;
+
+    border-radius:50%;
+
+    border:
+    5px solid rgba(255,255,255,.1);
+
+    border-top:
+    5px solid #7c3aed;
+
+    animation:
+    spin 1s linear infinite;
+}
+
+@keyframes spin{
+
+    from{
+        transform:rotate(0);
+    }
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+
+.finding-title{
+
+    font-size:26px;
+
+    font-weight:800;
+}
+
+.finding-sub{
+
+    color:var(--sub);
 }
 
 
@@ -501,68 +299,6 @@ body::before{
     height:46px;
 
     padding:0 18px;
-
-    border-radius:16px;
-
-    cursor:pointer;
-
-    font-weight:700;
-}
-
-
-
-/* ROOM */
-
-.room-box{
-
-    padding:12px;
-
-    display:flex;
-
-    gap:10px;
-
-    background:
-    rgba(15,23,42,.35);
-
-    border-bottom:
-    1px solid rgba(255,255,255,.05);
-}
-
-.room-id{
-
-    flex:1;
-
-    height:50px;
-
-    border:none;
-    outline:none;
-
-    background:
-    rgba(255,255,255,.06);
-
-    color:white;
-
-    border-radius:16px;
-
-    padding:0 16px;
-
-    font-size:15px;
-}
-
-.create-btn{
-
-    border:none;
-
-    background:
-    linear-gradient(
-        135deg,
-        #2563eb,
-        #7c3aed
-    );
-
-    color:white;
-
-    padding:0 20px;
 
     border-radius:16px;
 
@@ -824,6 +560,11 @@ body::before{
         border-radius:18px;
     }
 
+    .text{
+
+        font-size:15px;
+    }
+
 }
 
 </style>
@@ -833,6 +574,26 @@ body::before{
 <body>
 
 
+
+<!-- FINDING -->
+
+<div class="finding" id="finding">
+
+    <div class="loader"></div>
+
+    <div class="finding-title">
+        Đang tìm người lạ...
+    </div>
+
+    <div class="finding-sub">
+        Matching realtime 😏
+    </div>
+
+</div>
+
+
+
+<!-- APP -->
 
 <div class="app">
 
@@ -854,7 +615,7 @@ body::before{
                     class="status"
                     id="status"
                 >
-                    ● Chưa tạo phòng
+                    ● Đang kết nối...
                 </div>
 
             </div>
@@ -867,29 +628,7 @@ body::before{
             id="nextBtn"
             class="next-btn"
         >
-            Thoát
-        </button>
-
-    </div>
-
-
-
-    <!-- ROOM -->
-
-    <div class="room-box">
-
-        <input
-            id="roomInput"
-            class="room-id"
-            placeholder="ID phòng tự động..."
-            readonly
-        >
-
-        <button
-            id="createBtn"
-            class="create-btn"
-        >
-            Tạo phòng
+            Next
         </button>
 
     </div>
@@ -1019,6 +758,11 @@ document.getElementById(
     "status"
 );
 
+const finding =
+document.getElementById(
+    "finding"
+);
+
 const imageInput =
 document.getElementById(
     "imageInput"
@@ -1032,16 +776,6 @@ document.getElementById(
 const viewerImage =
 document.getElementById(
     "viewerImage"
-);
-
-const roomInput =
-document.getElementById(
-    "roomInput"
-);
-
-const createBtn =
-document.getElementById(
-    "createBtn"
 );
 
 
@@ -1058,127 +792,131 @@ let roomId = null;
 
 
 
-/* AUTO ROOM ID */
+/* MATCH */
 
-function generateRoomId(){
+async function findPartner(){
 
-    return (
-
-        "ROOM-" +
-
-        Math.random()
-
-        .toString(36)
-
-        .substring(2,6)
-
-        .toUpperCase()
-
-    );
-}
+    finding.style.display =
+    "flex";
 
 
 
-/* CREATE ROOM */
-
-createBtn.onclick =
-async function(){
-
-    roomId =
-    generateRoomId();
+    const waitingRef =
+    db.ref("waitingUsers");
 
 
 
-    roomInput.value =
-    roomId;
+    const snap =
+    await waitingRef.once("value");
 
 
 
-    statusEl.innerHTML =
-
-    "● Đã tạo " +
-    roomId;
+    let found = null;
 
 
 
-    await db.ref(
+    snap.forEach((s)=>{
 
-        "rooms/" + roomId
+        if(s.key !== myId && !found){
 
-    ).set({
-
-        createdAt:Date.now(),
-
-        owner:myId
+            found = s.key;
+        }
 
     });
 
 
 
-    startChat();
+    if(found){
+
+        roomId =
+        "room_" +
+        Date.now();
 
 
-
-    navigator.clipboard
-    .writeText(roomId);
-
-
-
-    alert(
-        "Đã copy ID phòng 😏"
-    );
-};
-
-
-
-/* JOIN AUTO */
-
-roomInput.addEventListener(
-
-    "click",
-
-    async ()=>{
-
-        const id =
-        prompt("Nhập ID phòng");
-
-        if(!id) return;
-
-
-
-        const snap =
 
         await db.ref(
-            "rooms/" + id
-        ).once("value");
+            "rooms/" + roomId
+        ).set({
+
+            users:{
+                a:myId,
+                b:found
+            }
+        });
 
 
 
-        if(!snap.exists()){
-
-            alert("Không tồn tại 😭");
-
-            return;
-        }
-
-
-
-        roomId = id;
-
-        roomInput.value = id;
-
-
-
-        statusEl.innerHTML =
-
-        "● Đang ở " + id;
+        await waitingRef
+        .child(found)
+        .remove();
 
 
 
         startChat();
+
+    }else{
+
+        await waitingRef
+        .child(myId)
+        .set(true);
+
+
+
+        waitingRef.on(
+
+            "child_removed",
+
+            async (s)=>{
+
+                if(
+                    s.key === myId
+                ){
+
+                    const rooms =
+                    await db.ref(
+                        "rooms"
+                    ).once("value");
+
+
+
+                    rooms.forEach((r)=>{
+
+                        const d =
+                        r.val();
+
+                        if(
+
+                            d.users &&
+
+                            (
+                                d.users.a === myId ||
+
+                                d.users.b === myId
+                            )
+                        ){
+
+                            roomId =
+                            r.key;
+                        }
+
+                    });
+
+
+
+                    if(roomId){
+
+                        startChat();
+                    }
+
+                }
+
+            }
+
+        );
+
     }
 
-);
+}
 
 
 
@@ -1186,28 +924,16 @@ roomInput.addEventListener(
 
 function startChat(){
 
+    finding.style.display =
+    "none";
 
-
-    db.ref(
-
-        "rooms/" +
-
-        roomId +
-
-        "/messages"
-
-    ).off();
+    statusEl.innerHTML =
+    "● Đã kết nối";
 
 
 
     db.ref(
-
-        "rooms/" +
-
-        roomId +
-
-        "/messages"
-
+        "rooms/" + roomId + "/messages"
     ).on(
 
         "child_added",
@@ -1297,75 +1023,6 @@ function startChat(){
 
     );
 
-
-
-    /* EXIT DETECT */
-
-    db.ref(
-
-        "rooms/" +
-        roomId +
-        "/online/" +
-        myId
-
-    ).set(true);
-
-
-
-    db.ref(
-
-        "rooms/" +
-        roomId +
-        "/online"
-
-    ).on(
-
-        "value",
-
-        (snap)=>{
-
-            const users =
-            snap.val() || {};
-
-
-
-            const total =
-            Object.keys(users)
-            .length;
-
-
-
-            if(total <= 1){
-
-                addSystemMessage(
-                    "Người kia đã thoát 😢"
-                );
-            }
-
-        }
-
-    );
-
-
-
-    window.addEventListener(
-
-        "beforeunload",
-
-        ()=>{
-
-            db.ref(
-
-                "rooms/" +
-                roomId +
-                "/online/" +
-                myId
-
-            ).remove();
-        }
-
-    );
-
 }
 
 
@@ -1383,13 +1040,9 @@ function sendMessage(){
 
 
     db.ref(
-
         "rooms/" +
-
         roomId +
-
         "/messages"
-
     ).push({
 
         text:text,
@@ -1465,9 +1118,7 @@ imageInput.addEventListener(
             db.ref(
 
                 "rooms/" +
-
                 roomId +
-
                 "/messages"
 
             ).push({
@@ -1496,20 +1147,6 @@ imageInput.addEventListener(
 nextBtn.onclick =
 
 function(){
-
-    if(roomId){
-
-        db.ref(
-
-            "rooms/" +
-            roomId +
-            "/online/" +
-            myId
-
-        ).remove();
-    }
-
-
 
     location.reload();
 };
@@ -1554,288 +1191,11 @@ function safe(text){
 
 
 
-/* SYSTEM */
+/* RUN */
 
-function addSystemMessage(text){
-
-    const row =
-    document.createElement("div");
-
-    row.innerHTML = `
-
-        <div style="
-        text-align:center;
-        color:#94a3b8;
-        font-size:13px;
-        padding:8px;
-        ">
-
-            ${text}
-
-        </div>
-
-    `;
-
-    messages.appendChild(row);
-
-}
+findPartner();
 
 </script>
 
 </body>
 </html>
-
-Code gốc tham chiếu từ file user gửi 
-
-
-
-bỏ ID phòng đi ko cần ID nưac
-
-Vậy làm kiểu đẹp hơn nè 😏
-
-Không hiện ID nữa
-
-Người tạo phòng → tự sinh room ngầm
-
-Share link là vô thẳng phòng
-
-Ví dụ:
-
-https://webcuaban.vercel.app/?room=abc123
-Ai mở link là auto join 👌
-Kiểu này mới giống Discord / Messenger Room á trời.
-
-XÓA nguyên block này:
-
-<div class="room-box">
-
-    <input
-        id="roomInput"
-        class="room-id"
-        placeholder="ID phòng tự động..."
-        readonly
-    >
-
-    <button
-        id="createBtn"
-        class="create-btn"
-    >
-        Tạo phòng
-    </button>
-
-</div>
-Rồi XOÁ luôn:
-
-const roomInput
-const createBtn
-XÓA nguyên:
-
-createBtn.onclick
-và:
-
-roomInput.addEventListener
-Rồi thay toàn bộ phần ROOM bằng này 👇
-
-/* ROOM AUTO */
-
-const urlParams =
-
-new URLSearchParams(
-    location.search
-);
-
-
-
-roomId =
-urlParams.get("room");
-
-
-
-if(!roomId){
-
-    roomId =
-
-    "room_" +
-
-    Math.random()
-
-    .toString(36)
-
-    .substring(2,8);
-
-
-
-    const newUrl =
-
-    location.origin +
-
-    location.pathname +
-
-    "?room=" +
-
-    roomId;
-
-
-
-    history.replaceState(
-        {},
-        "",
-        newUrl
-    );
-
-
-
-    navigator.clipboard
-    .writeText(newUrl);
-
-
-
-    alert(
-        "Đã copy link phòng 😏"
-    );
-}
-
-
-
-/* CREATE ROOM */
-
-db.ref(
-
-    "rooms/" + roomId
-
-).set({
-
-    createdAt:Date.now()
-
-});
-
-
-
-statusEl.innerHTML =
-
-"● Phòng riêng";
-Giờ hoạt động kiểu:
-
-Vô web lần đầu → tự tạo phòng
-
-Tự copy link
-
-Gửi link cho bạn
-
-Người kia mở link → vào cùng phòng
-
-Không cần nhập ID 😌
-Nhìn xịn hơn nhiều.
-
-Database Firebase sẽ lưu:
-
-rooms
- └── room_x8dk2a
-      └── messages
-gọn như kiếm Nhật 🗡️
-
-
-
-
-
-
-<div class="loader"></div>
-
-<div class="finding-title">
-    Đang tìm người lạ...
-</div>
-
-<div class="finding-sub">
-    Matching realtime 😏
-</div>
-
-
-<div class="topbar">
-
-    <div class="top-left">
-
-        <div class="logo">
-            ✦
-        </div>
-
-        <div class="info">
-
-            <div class="title">
-                Nova Stranger
-            </div>
-
-            <div
-                class="status"
-                id="status"
-            >
-                ● Đang kết nối...
-            </div>
-
-        </div>
-
-    </div>
-
-
-
-    <button
-        id="nextBtn"
-        class="next-btn"
-    >
-        Next
-    </button>
-
-</div>
-
-
-
-<div
-    id="messages"
-    class="messages"
-></div>
-
-
-
-<div class="bottom">
-
-    <div class="sendbox">
-
-        <label
-            class="image-btn"
-            for="imageInput"
-        >
-            📷
-        </label>
-
-        <input
-            type="file"
-            id="imageInput"
-            accept="image/*"
-            hidden
-        >
-
-        <input
-            id="messageInput"
-            class="send-input"
-            placeholder="Nhắn gì đó..."
-        >
-
-        <button
-            id="sendBtn"
-            class="send-btn"
-        >
-            ➤
-        </button>
-
-    </div>
-
-</div>
-
-
-<img
-    id="viewerImage"
-    class="viewer-image"
->
-
-
-
-Đóng
